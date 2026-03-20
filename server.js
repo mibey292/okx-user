@@ -14,13 +14,25 @@ const PORT = process.env.PORT || 3000;
 
 // Prevent external redirects at middleware level
 app.use((req, res, next) => {
+  // Set headers to prevent redirects
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', 
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "connect-src 'self' localhost:* ws: wss:; " +
+    "frame-src 'self'; " +
+    "img-src * data: blob:; " +
+    "style-src 'self' 'unsafe-inline' data:"
+  );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  
   // Override res.redirect to prevent certain redirects
   const originalRedirect = res.redirect;
   res.redirect = function(statusOrUrl, url) {
     const redirectUrl = typeof statusOrUrl === 'string' ? statusOrUrl : url;
     if (redirectUrl && typeof redirectUrl === 'string' && redirectUrl.includes('okx.com')) {
       console.log('🚫 Server blocked redirect to:', redirectUrl);
-      return res.json({ message: 'Redirect blocked', blocked: true });
+      return res.status(200).json({ message: 'Redirect blocked', blocked: true });
     }
     return originalRedirect.apply(this, arguments);
   };
