@@ -12,6 +12,35 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Prevent external redirects at middleware level
+app.use((req, res, next) => {
+  // Override res.redirect to prevent certain redirects
+  const originalRedirect = res.redirect;
+  res.redirect = function(statusOrUrl, url) {
+    const redirectUrl = typeof statusOrUrl === 'string' ? statusOrUrl : url;
+    if (redirectUrl && typeof redirectUrl === 'string' && redirectUrl.includes('okx.com')) {
+      console.log('🚫 Server blocked redirect to:', redirectUrl);
+      return res.json({ message: 'Redirect blocked', blocked: true });
+    }
+    return originalRedirect.apply(this, arguments);
+  };
+  next();
+});
+
+// Block external API redirects
+app.use((req, res, next) => {
+  // Intercept response headers
+  const originalSet = res.set;
+  res.set = function(field, value) {
+    if (field && field.toLowerCase() === 'location' && value && value.includes('okx.com')) {
+      console.log('🚫 Server blocked Location header redirect to:', value);
+      return res;
+    }
+    return originalSet.apply(this, arguments);
+  };
+  next();
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
