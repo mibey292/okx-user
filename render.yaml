@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: okx-login-form
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: ENABLE_CORS
+        value: 'true'
+    healthCheckPath: /api/health
+    preDeploy: npm install
+    
+# Note: Use GitHub integration at https://dashboard.render.com
+# 1. Connect your GitHub repository
+# 2. Select this branch
+# 3. Configure environment variables in Render dashboard
+# 4. Deploy via Render dashboard
